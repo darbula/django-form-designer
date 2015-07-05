@@ -10,14 +10,6 @@ from django.conf import settings as django_settings
 from django.utils.datastructures import SortedDict
 from django.core.exceptions import ImproperlyConfigured
 
-# support for custom User models in Django 1.5+
-try:
-    from django.contrib.auth import get_user_model
-except ImportError:  # django < 1.5
-    from django.contrib.auth.models import User
-else:
-    User = get_user_model()
-
 from form_designer.fields import TemplateTextField, TemplateCharField, ModelNameField, RegexpExpressionField
 from form_designer.utils import get_class
 from form_designer import settings
@@ -176,7 +168,7 @@ class FormDefinition(models.Model):
     @property
     def submit_flag_name(self):
         name = settings.SUBMIT_FLAG_NAME % self.name
-        # make sure we are not overriding one of the actual form fields 
+        # make sure we are not overriding one of the actual form fields
         while self.formdefinitionfield_set.filter(name__exact=name).count() > 0:
             name += '_'
         return name
@@ -225,7 +217,7 @@ class FormDefinitionField(models.Model):
     def ____init__(self, field_class=None, name=None, required=None, widget=None, label=None, initial=None, help_text=None, *args, **kwargs):
         super(FormDefinitionField, self).__init__(*args, **kwargs)
         self.name = name
-        self.field_class = field_class  
+        self.field_class = field_class
         self.required = required
         self.widget = widget
         self.label = label
@@ -306,12 +298,12 @@ class FormDefinitionField(models.Model):
 class FormLog(models.Model):
     form_definition = models.ForeignKey(FormDefinition, related_name='logs')
     created = models.DateTimeField(_('Created'), auto_now=True)
-    created_by = models.ForeignKey(User, null=True, blank=True)
+    created_by = models.ForeignKey(getattr(django_settings, "AUTH_USER_MODEL", "auth.User"), null=True, blank=True)
     _data = None
 
     def __unicode__(self):
         return "%s (%s)" % (self.form_definition.title or  \
-            self.form_definition.name, self.created) 
+            self.form_definition.name, self.created)
 
     def get_data(self):
         if self._data:
@@ -357,7 +349,7 @@ class FormLog(models.Model):
 
     def save(self, *args, **kwargs):
         super(FormLog, self).save(*args, **kwargs)
-        if self._data: 
+        if self._data:
             # safe form data and then clear temporary variable
             for value in self.values.all():
                 value.delete()
@@ -378,7 +370,7 @@ class FormValue(models.Model):
         value = PickledObjectField(_('value'), null=True, blank=True)
     else:
         # otherwise just use a TextField, with the drawback that
-        # all values will just be stored as unicode strings, 
+        # all values will just be stored as unicode strings,
         # but you can easily query the database for form results.
         value = models.TextField(_('value'), null=True, blank=True)
 
