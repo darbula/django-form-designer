@@ -1,7 +1,7 @@
 Django Form Designer
 ********************
 
-A Django admin app with a GUI to create complex forms without any programming skills; 
+A Django admin app with a GUI to create complex forms without any programming skills;
 complete with logging, validation, and redirects.
 
 **Key features**:
@@ -10,10 +10,10 @@ complete with logging, validation, and redirects.
 * Form data can be logged and CSV-exported, sent via e-mail, or forwarded to any web address
 * Integration with `Django CMS <http://www.django-cms.org>`_: Add forms to any page
 * Use drag & drop to change the position of your form fields
-* Fully collapsible admin interface for better overview over your form 
+* Fully collapsible admin interface for better overview over your form
 * Implements many form fields included with Django (TextField, EmailField, DateField etc)
-* Validation rules as supplied by Django are fully configurable (maximum length, regular 
-  expression etc) 
+* Validation rules as supplied by Django are fully configurable (maximum length, regular
+  expression etc)
 * Customizable messages and labels
 * Supports POST and GET forms
 * Signals on form render, submission, success, error.
@@ -28,7 +28,7 @@ This install guide assumes that you are familiar with Python and Django.
 
     $ pip install git+git://github.com/philomat/django-form-designer.git#egg=django-form-designer
 
-  **or** download it from http://github.com/philomat/django-form-designer, and run the installation 
+  **or** download it from http://github.com/philomat/django-form-designer, and run the installation
   script::
 
     $ python setup.py install
@@ -51,6 +51,12 @@ Basic setup
   **or**, if you are using South::
 
     $ manage.py migrate form_designer
+
+  If you are using Django 1.6 and South < 1.0.2, you must also add::
+
+    'form_designer': 'form_designer.south_migrations',
+
+  to your ``settings.SOUTH_MIGRATION_MODULES``.
 
 - If you are using ``django.contrib.staticfiles`` (recommended), just run the
   usual command to collect static files::
@@ -80,10 +86,10 @@ Basic setup
      public, this step is not necessary.
 
 
-Using Django Form Designer with Django CMS 
+Using Django Form Designer with Django CMS
 ==========================================
 
-- Add ``form_designer.contrib.cms_plugins.form_designer_form`` to your ``INSTALLED_APPS`` 
+- Add ``form_designer.contrib.cms_plugins.form_designer_form`` to your ``INSTALLED_APPS``
   setting::
 
         INSTALLED_APPS = (
@@ -95,7 +101,7 @@ Using Django Form Designer with Django CMS
 
     $ manage.py syncdb
 
-You can now add forms to pages created with Django CMS. 
+You can now add forms to pages created with Django CMS.
 
 
 Optional requirements
