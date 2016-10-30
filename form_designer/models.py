@@ -137,6 +137,23 @@ class FormDefinition(models.Model):
         except TemplateSyntaxError:
             return text
 
+    def get_additional_mails(self, form_data):
+        """ Return additional mail addresses based on selected position field
+        in form_data and mail adresses defined in position choice labels """
+        FIELD_NAME = 'Position'
+        MAIL_RE = r"\[(.*)\]"
+        try:
+            pos = self.get_field_dict()[FIELD_NAME]
+            val = [fd['value'] for fd in form_data if fd['name'] == FIELD_NAME][0]
+            ind = pos.choice_values.split().index(val)
+            label = pos.choice_labels.split('\r\n')[ind]
+            mo = re.search(MAIL_RE, label)
+            mails = mo.groups()[0]
+            mails_list = re.compile('\s*[,;]+\s*').split(mails)
+        except:
+            return []
+        return mails_list
+
     def send_mail(self, form, files=[]):
         # TODO: refactor, move to utils
         form_data = self.get_form_data(form)
@@ -146,6 +163,8 @@ class FormDefinition(models.Model):
         mail_to = re.compile('\s*[,;]+\s*').split(self.mail_to)
         for key, email in enumerate(mail_to):
             mail_to[key] = self.string_template_replace(email, context_dict)
+
+        mail_to.extend(self.get_additional_mails(form_data))
 
         mail_from = self.mail_from or None
         if mail_from:
