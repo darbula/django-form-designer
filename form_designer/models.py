@@ -163,6 +163,7 @@ class FormDefinition(models.Model):
             for file_path in files:
                 message.attach_file(file_path)
 
+        message.content_subtype = "html"
         message.send(fail_silently=False)
 
     @property
