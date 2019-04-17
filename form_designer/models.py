@@ -7,7 +7,7 @@ from django.utils.translation import ugettext, ugettext_lazy as _
 from django.forms import widgets
 from django.core.mail import send_mail
 from django.conf import settings as django_settings
-from django.utils.datastructures import SortedDict
+from collections import OrderedDict
 from django.core.exceptions import ImproperlyConfigured
 
 from form_designer.fields import TemplateTextField, TemplateCharField, ModelNameField, RegexpExpressionField
@@ -66,7 +66,7 @@ class FormDefinition(models.Model):
         super(FormDefinition, self).save()
 
     def get_field_dict(self):
-        field_dict = SortedDict()
+        field_dict = OrderedDict()
         names = []
         for field in self.formdefinitionfield_set.all():
             field_dict[field.name] = field
