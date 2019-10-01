@@ -110,7 +110,7 @@ class FormDefinition(models.Model):
             t = get_template('txt/formdefinition/data_message.txt')
         else:
             t = Template(self.message_template)
-        context = Context(self.get_form_data_context(form_data))
+        context = self.get_form_data_context(form_data)
         context['data'] = form_data
         return t.render(context)
 
