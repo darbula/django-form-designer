@@ -20,7 +20,7 @@ class ModelNameFormField(forms.CharField):
         Unicode object.
         """
         value = super(ModelNameFormField, self).clean(value)
-        if value == u'':
+        if value == u'' or value is None:
             return value
         if not ModelNameFormField.get_model_from_string(value):
             raise ValidationError(
@@ -83,6 +83,8 @@ class RegexpExpressionFormField(forms.CharField):
         """
         value = super(RegexpExpressionFormField, self).clean(value)
         import re
+        if value is None:
+            return value
         try:
             re.compile(value)
         except Exception, error:

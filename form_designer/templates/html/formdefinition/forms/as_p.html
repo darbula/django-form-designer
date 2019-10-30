@@ -1,5 +1,5 @@
 {% load friendly %}
-<form name="{{ form_definition.name }}" action="{{ form_definition.action }}" method="{{ form_definition.method }}" enctype="multipart/form-data">
+<form name="{{ form_definition.name }}" action="{% if form_definition.action is not None %}{{ form_definition.action }}{% endif %}" method="{{ form_definition.method }}" enctype="multipart/form-data">
     {% for entry in logs %}
         {% for field in entry.data %}
         <p>

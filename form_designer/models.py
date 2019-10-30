@@ -2,6 +2,7 @@ import re
 import hashlib, uuid
 from decimal import Decimal
 
+import django
 from django.db import models
 from django.utils.translation import ugettext, ugettext_lazy as _
 from django.forms import widgets
@@ -9,6 +10,7 @@ from django.core.mail import send_mail
 from django.conf import settings as django_settings
 from collections import OrderedDict
 from django.core.exceptions import ImproperlyConfigured
+from django.template.loader import get_template
 
 from form_designer.fields import TemplateTextField, TemplateCharField, ModelNameField, RegexpExpressionField
 from form_designer.utils import get_class
@@ -27,6 +29,24 @@ class FormValueDict(dict):
         self['value'] = value
         self['label'] = label
         super(FormValueDict, self).__init__()
+
+def get_django_template_from_string(template_string):
+    if django.VERSION >= (1, 9):
+        # We need to create an ad-hoc django templates backend
+        # since we can't trust that the user's configuration
+        # even includes one.  Using the "raw" `django.template.Template`
+        # object does not work for reasons unknown (well, semi-unknown;
+        # it just seems to have a slightly different API).
+        from django.template.backends.django import DjangoTemplates
+        return DjangoTemplates({
+            'NAME': 'django-form-designer-renderer',
+            'DIRS': [],
+            'APP_DIRS': False,
+            'OPTIONS': {},
+        }).from_string(template_string)
+    else:
+        from django.template import Template
+        return Template(template_string)
 
 
 class FormDefinition(models.Model):
@@ -72,11 +92,15 @@ class FormDefinition(models.Model):
             field_dict[field.name] = field
         return field_dict
 
-    @models.permalink
     def get_absolute_url(self):
+        try:
+            from django.urls import reverse
+        except ImportError:
+            from django.core.urlresolvers import reverse
+
         if self.require_hash:
-            return ('form_designer.views.detail_by_hash', [str(self.public_hash)])
-        return ('form_designer.views.detail', [str(self.name)])
+            return reverse('form_designer.views.detail_by_hash', [str(self.public_hash)])
+        return reverse('form_designer.views.detail', [str(self.name)])
 
     def get_form_data(self, form):
         # TODO: refactor, move to utils or views
@@ -102,16 +126,18 @@ class FormDefinition(models.Model):
 
     def compile_message(self, form_data, template=None):
         # TODO: refactor, move to utils
-        from django.template.loader import get_template
-        from django.template import Context, Template
         if template:
             t = get_template(template)
         elif not self.message_template:
             t = get_template('txt/formdefinition/data_message.txt')
         else:
-            t = Template(self.message_template)
-        context = Context(self.get_form_data_context(form_data))
+            t = get_django_template_from_string(self.message_template)
+        context = self.get_form_data_context(form_data)
         context['data'] = form_data
+        if django.VERSION < (1, 9):
+            # For old Djangoes, we need to wrap these contexts
+            from django.template import Context
+            context = Context(context)
         return t.render(context)
 
     def count_fields(self):
@@ -201,7 +227,7 @@ class FormDefinitionField(models.Model):
     regex = RegexpExpressionField(_('regular Expression'), max_length=255, blank=True, null=True)
 
     choice_model_choices = settings.CHOICE_MODEL_CHOICES
-    choice_model = ModelNameField(_('data model'), max_length=255, blank=True, null=True, choices=choice_model_choices, help_text=('your_app.models.ModelName' if not choice_model_choices else None))
+    choice_model = ModelNameField(_('data model'), max_length=255, blank=True, null=True, choices=choice_model_choices, help_text=('your_app.models.ModelName' if choice_model_choices is not None else None))
     choice_model_empty_label = models.CharField(_('empty label'), max_length=255, blank=True, null=True)
 
     class Meta:
